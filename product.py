@@ -8,8 +8,7 @@ from trytond.pool import PoolMeta
 __all__ = ['ProductSupplier', 'Product', 'ProductPurchaseProductSupplier']
 
 
-class ProductSupplier:
-    __metaclass__ = PoolMeta
+class ProductSupplier(metaclass=PoolMeta):
     __name__ = 'purchase.product_supplier'
     variant_suppliers = fields.Many2Many('product.product-purchase.product_supplier',
         'supplier', 'product', 'Variant Supplier',
@@ -17,8 +16,7 @@ class ProductSupplier:
         depends=['product'])
 
 
-class Product:
-    __metaclass__ = PoolMeta
+class Product(metaclass=PoolMeta):
     __name__ = 'product.product'
     purchasable_variant = fields.Function(fields.Boolean('Purchasable Variant'),
         'on_change_with_purchasable_variant', searcher='search_purchasable_variant')
