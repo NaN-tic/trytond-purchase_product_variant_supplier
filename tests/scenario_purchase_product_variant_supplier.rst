@@ -8,37 +8,24 @@ Imports::
     >>> from dateutil.relativedelta import relativedelta
     >>> from decimal import Decimal
     >>> from operator import attrgetter
-    >>> from proteus import config, Model, Wizard, Report
+    >>> from proteus import Model, Wizard, Report
+    >>> from trytond.tests.tools import activate_modules
     >>> from trytond.modules.company.tests.tools import create_company, \
     ...     get_company
     >>> from trytond.modules.account.tests.tools import create_fiscalyear, \
     ...     create_chart, get_accounts, create_tax
-    >>> from.trytond.modules.account_invoice.tests.tools import \
+    >>> from trytond.modules.account_invoice.tests.tools import \
     ...     set_fiscalyear_invoice_sequences, create_payment_term
     >>> today = datetime.date.today()
 
-Create database::
-
-    >>> config = config.set_trytond()
-    >>> config.pool.test = True
-
 Install purchase::
 
-    >>> Module = Model.get('ir.module')
-    >>> purchase_module, = Module.find([('name', '=', 'purchase_product_variant_supplier')])
-    >>> purchase_module.click('install')
-    >>> Wizard('ir.module.install_upgrade').execute('upgrade')
+    >>> config = activate_modules('purchase_product_variant_supplier')
 
 Create company::
 
     >>> _ = create_company()
     >>> company = get_company()
-
-Reload the context::
-
-    >>> User = Model.get('res.user')
-    >>> Group = Model.get('res.group')
-    >>> config._context = User.get_preferences(True, config.context)
 
 Create fiscal year::
 
@@ -80,6 +67,19 @@ Create parties::
     >>> customer = Party(name='Customer')
     >>> customer.save()
 
+Create account categories::
+
+    >>> ProductCategory = Model.get('product.category')
+    >>> account_category = ProductCategory(name="Account Category")
+    >>> account_category.accounting = True
+    >>> account_category.account_expense = expense
+    >>> account_category.account_revenue = revenue
+    >>> account_category.save()
+
+    >>> account_category_tax, = account_category.duplicate()
+    >>> account_category_tax.supplier_taxes.append(tax)
+    >>> account_category_tax.save()
+
 Create product::
 
     >>> ProductUom = Model.get('product.uom')
@@ -96,9 +96,7 @@ Create product::
     >>> template.list_price = Decimal('10')
     >>> template.cost_price = Decimal('5')
     >>> template.cost_price_method = 'fixed'
-    >>> template.account_expense = expense
-    >>> template.account_revenue = revenue
-    >>> template.supplier_taxes.append(tax)
+    >>> template.account_category = account_category_tax
     >>> template.save()
     >>> product, = template.products
     >>> product.code = 'P01'
@@ -168,7 +166,7 @@ Purchase 5 products::
     >>> purchase_line = PurchaseLine()
     >>> purchase.lines.append(purchase_line)
     >>> purchase_line.product = product2
-    >>> purchase_line.quantity = 1.0
-    >>> purchase_line.unit_price == Decimal('5.00')
+    >>> purchase_line.quantity = 20.0
+    >>> purchase_line.unit_price == Decimal('10.00')
     True
     >>> purchase.save()
